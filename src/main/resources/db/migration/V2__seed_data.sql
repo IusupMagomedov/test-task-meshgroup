@@ -1,0 +1,2 @@
+-- Initial users are created by DataInitializer on application startup
+-- See meshgroup.testtask.config.DataInitializer
