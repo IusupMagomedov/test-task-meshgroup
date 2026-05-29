@@ -9,8 +9,10 @@ import meshgroup.testtask.exception.BusinessException;
 import meshgroup.testtask.repository.EmailDataRepository;
 import meshgroup.testtask.repository.PhoneDataRepository;
 import meshgroup.testtask.repository.UserRepository;
+import meshgroup.testtask.repository.UserSpecification;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -70,8 +72,12 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public Page<UserResponse> searchUsers(LocalDate dateOfBirth, String phone, String name, String email, Pageable pageable) {
-        // Specification will be plugged in at step 9
-        return userRepository.findAll(pageable).map(this::toResponse);
+        Specification<User> spec = Specification
+                .where(UserSpecification.dateOfBirthAfter(dateOfBirth))
+                .and(UserSpecification.phoneEquals(phone))
+                .and(UserSpecification.nameLike(name))
+                .and(UserSpecification.emailEquals(email));
+        return userRepository.findAll(spec, pageable).map(this::toResponse);
     }
 
     private User getUser(Long userId) {
