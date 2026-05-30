@@ -10,6 +10,8 @@ import meshgroup.testtask.repository.EmailDataRepository;
 import meshgroup.testtask.repository.PhoneDataRepository;
 import meshgroup.testtask.repository.UserRepository;
 import meshgroup.testtask.repository.UserSpecification;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -18,6 +20,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+
+import static meshgroup.testtask.config.CacheConfig.USERS_CACHE;
 
 @Service
 @RequiredArgsConstructor
@@ -28,6 +32,7 @@ public class UserService {
     private final EmailDataRepository emailDataRepository;
     private final PhoneDataRepository phoneDataRepository;
 
+    @CacheEvict(value = USERS_CACHE, allEntries = true)
     public void addEmail(Long userId, String email) {
         if (emailDataRepository.existsByEmail(email)) {
             throw new BusinessException("Email already in use", HttpStatus.CONFLICT);
@@ -39,6 +44,7 @@ public class UserService {
         emailDataRepository.save(emailData);
     }
 
+    @CacheEvict(value = USERS_CACHE, allEntries = true)
     public void deleteEmail(Long userId, String email) {
         User user = getUser(userId);
         if (user.getEmails().size() <= 1) {
@@ -49,6 +55,7 @@ public class UserService {
         emailDataRepository.delete(emailData);
     }
 
+    @CacheEvict(value = USERS_CACHE, allEntries = true)
     public void addPhone(Long userId, String phone) {
         if (phoneDataRepository.existsByPhone(phone)) {
             throw new BusinessException("Phone already in use", HttpStatus.CONFLICT);
@@ -60,6 +67,7 @@ public class UserService {
         phoneDataRepository.save(phoneData);
     }
 
+    @CacheEvict(value = USERS_CACHE, allEntries = true)
     public void deletePhone(Long userId, String phone) {
         User user = getUser(userId);
         if (user.getPhones().size() <= 1) {
@@ -70,6 +78,7 @@ public class UserService {
         phoneDataRepository.delete(phoneData);
     }
 
+    @Cacheable(value = USERS_CACHE, key = "{#dateOfBirth, #phone, #name, #email, #pageable}")
     @Transactional(readOnly = true)
     public Page<UserResponse> searchUsers(LocalDate dateOfBirth, String phone, String name, String email, Pageable pageable) {
         Specification<User> spec = Specification
